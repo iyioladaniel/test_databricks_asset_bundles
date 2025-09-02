@@ -24,8 +24,8 @@ jobs:
 
         - name: Deploy to Databricks Production
           env:
-            DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-            DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+            DATABRICKS_HOST: ${{ secrets.DATABRICKS_PROD_HOST }}
+            DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PROD_TOKEN }}
             DATABRICKS_SERVICE_PRINCIPAL_NAME: ${{ secrets.DATABRICKS_SERVICE_PRINCIPAL_NAME }}
           run: |
             # Validate the bundle configuration before deployment
