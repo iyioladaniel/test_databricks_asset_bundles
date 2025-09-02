@@ -26,5 +26,9 @@ targets:
       # CD workflow sets these from secrets DATABRICKS_PROD_HOST and DATABRICKS_PROD_TOKEN
       root_path: /Workspace/Shared/prod/.bundle/${bundle.name}/${bundle.target}
     
-    run_as:
-      service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
+    # Apply run_as only to jobs (not pipelines)
+    resources:
+      jobs:
+        test_databricks_asset_bundles_job:
+          run_as:
+            service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
