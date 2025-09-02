@@ -1,0 +1,37 @@
+# Databricks bundle artifacts
+.databricks/
+build/
+dist/
+__pycache__/
+*.egg-info
+.venv/
+
+# Environment files (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Scratch/temporary files
+scratch/**
+!scratch/README.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Databricks configuration with sensitive info
+.databrickscfg

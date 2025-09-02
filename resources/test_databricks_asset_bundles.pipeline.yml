@@ -1,0 +1,13 @@
+# The main pipeline for test_databricks_asset_bundles
+resources:
+  pipelines:
+    test_databricks_asset_bundles_pipeline:
+      name: test_databricks_asset_bundles_pipeline
+      catalog: main
+      schema: test_databricks_asset_bundles_${bundle.target}
+      libraries:
+        - notebook:
+            path: ../src/dlt_pipeline.ipynb
+
+      configuration:
+        bundle.sourcePath: ${workspace.file_path}/src
