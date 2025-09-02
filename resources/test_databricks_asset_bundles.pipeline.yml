@@ -5,6 +5,10 @@ resources:
       name: test_databricks_asset_bundles_pipeline
       catalog: main
       schema: test_databricks_asset_bundles_${bundle.target}
+      
+      # Use serverless compute for the pipeline
+      serverless: true
+      
       libraries:
         - notebook:
             path: ../src/dlt_pipeline.ipynb

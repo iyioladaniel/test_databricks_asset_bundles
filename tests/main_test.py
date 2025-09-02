@@ -1,7 +1,8 @@
 import os
+import sys
 import pytest
-from test_databricks_asset_bundles.main import get_taxis, get_spark
 
+from test_databricks_asset_bundles.main import get_taxis, get_spark
 
 @pytest.mark.skipif(
     os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true',
