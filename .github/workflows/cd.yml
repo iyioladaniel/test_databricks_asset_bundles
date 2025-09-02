@@ -33,6 +33,7 @@ jobs:
 
         - name: Deploy to Databricks Production
           env:
+            # Map production secrets to the standard environment variable names
             DATABRICKS_HOST: ${{ secrets.DATABRICKS_PROD_HOST }}
             DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PROD_TOKEN }}
             DATABRICKS_SERVICE_PRINCIPAL_NAME: ${{ secrets.DATABRICKS_SERVICE_PRINCIPAL_NAME }}

@@ -16,17 +16,14 @@ targets:
     # See also https://docs.databricks.com/dev-tools/bundles/deployment-modes.html.
     mode: development
     default: true
-    workspace:
-      # Authentication priority: environment variable > profile
-      # For CI/CD: set DATABRICKS_HOST env var
-      # For local development: uses DEFAULT profile when DATABRICKS_HOST is not set
-      host: ${DATABRICKS_HOST}
-      profile: DEFAULT
+    # No workspace configuration - authentication via environment variables
+    # DATABRICKS_HOST and DATABRICKS_TOKEN will be used automatically
 
   prod:
     mode: production
     workspace:
-      host: ${DATABRICKS_PROD_HOST}
+      # Authentication via environment variables DATABRICKS_HOST and DATABRICKS_TOKEN
+      # CD workflow sets these from secrets DATABRICKS_PROD_HOST and DATABRICKS_PROD_TOKEN
       root_path: /Workspace/Shared/prod/.bundle/${bundle.name}/${bundle.target}
     
     run_as:
