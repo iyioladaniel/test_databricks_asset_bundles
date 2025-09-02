@@ -17,12 +17,14 @@ targets:
     mode: development
     default: true
     workspace:
+      # For local development, use profile. For CI/CD, use environment variable
       profile: DEFAULT
+      host: ${DATABRICKS_HOST}
 
   prod:
     mode: production
     workspace:
-      host: ${DATABRICKS_HOST}
+      host: ${DATABRICKS_PROD_HOST}
       root_path: /Workspace/Shared/prod/.bundle/${bundle.name}/${bundle.target}
     
     run_as:
