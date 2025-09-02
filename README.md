@@ -165,93 +165,33 @@ databricks bundle run test_databricks_asset_bundles_pipeline --refresh-all
 
 ### `databricks.yml` - Main Bundle Configuration
 
-This is the central configuration file that defines your bundle:
+This is the central configuration file that defines your bundle. See the actual file: [`databricks.yml`](./databricks.yml)
 
-```yaml
-bundle:
-  name: test_databricks_asset_bundles
-  uuid: da3439c8-68ba-48bd-bcaa-af8f4ee4ad34
-
-include:
-  - resources/*.yml
-
-targets:
-  dev:                # Development environment
-    mode: development # Enables dev-specific features (prefixed names, paused schedules)
-    default: true
-    # Authentication via environment variables DATABRICKS_HOST and DATABRICKS_TOKEN
-
-  prod:               # Production environment
-    mode: production
-    workspace:
-      # Authentication via environment variables DATABRICKS_HOST and DATABRICKS_TOKEN
-      root_path: /Workspace/Shared/prod/.bundle/${bundle.name}/${bundle.target}
-    run_as:
-      service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
-```
+**Key features:**
+- **Development target**: Uses environment variables for authentication, development mode with prefixed resources
+- **Production target**: Uses service principal authentication for jobs, custom root path
+- **Resource inclusion**: Automatically includes all YAML files from `resources/` directory
 
 ### `resources/test_databricks_asset_bundles.job.yml` - Job Definition
 
-Defines a multi-task job with dependencies:
+Defines a multi-task job with dependencies. See the actual file: [`resources/test_databricks_asset_bundles.job.yml`](./resources/test_databricks_asset_bundles.job.yml)
 
-```yaml
-resources:
-  jobs:
-    test_databricks_asset_bundles_job:
-      name: test_databricks_asset_bundles_job
-      
-      trigger:                    # Scheduled execution
-        periodic:
-          interval: 1
-          unit: DAYS
-      
-      tasks:
-        - task_key: notebook_task           # Task 1: Run notebook
-          notebook_task:
-            notebook_path: ../src/notebook.ipynb
-            
-        - task_key: refresh_pipeline        # Task 2: Refresh pipeline (depends on Task 1)
-          depends_on:
-            - task_key: notebook_task
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.test_databricks_asset_bundles_pipeline.id}
-            
-        - task_key: main_task              # Task 3: Run Python wheel (depends on Task 2)
-          depends_on:
-            - task_key: refresh_pipeline
-          python_wheel_task:
-            package_name: test_databricks_asset_bundles
-            entry_point: main
-          libraries:
-            - whl: ../dist/*.whl           # References built Python package
-      
-      job_clusters:                        # Cluster configuration
-        - job_cluster_key: job_cluster
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: Standard_D3_v2
-            autoscale:
-              min_workers: 1
-              max_workers: 4
-```
+**Key features:**
+- **Multi-task workflow**: Notebook → Pipeline → Python wheel execution
+- **Task dependencies**: Sequential execution with proper dependency management
+- **Scheduled execution**: Daily trigger configuration
+- **Cluster configuration**: Autoscaling job cluster setup
+- **Service principal**: Production runs with service principal authentication
 
 ### `resources/test_databricks_asset_bundles.pipeline.yml` - Pipeline Definition
 
-Defines a Delta Live Tables (DLT) pipeline:
+Defines a Delta Live Tables (DLT) pipeline. See the actual file: [`resources/test_databricks_asset_bundles.pipeline.yml`](./resources/test_databricks_asset_bundles.pipeline.yml)
 
-```yaml
-resources:
-  pipelines:
-    test_databricks_asset_bundles_pipeline:
-      name: test_databricks_asset_bundles_pipeline
-      catalog: main                                    # Target catalog
-      schema: test_databricks_asset_bundles_${bundle.target}  # Dynamic schema based on target
-      libraries:
-        - notebook:
-            path: ../src/dlt_pipeline.ipynb           # DLT notebook source
-      configuration:
-        bundle.sourcePath: ${workspace.file_path}/src # Source code location
-```
+**Key features:**
+- **DLT pipeline**: Delta Live Tables for data transformation
+- **Dynamic schema**: Environment-specific schema naming
+- **Notebook integration**: DLT notebook as pipeline source
+- **User ownership**: Pipelines owned by authenticated user (not service principal)
 
 ## CI/CD Pipeline
 
@@ -448,12 +388,28 @@ Check the Databricks workspace under **Workflows** for job execution details.
 ## Next Steps
 
 - **✅ CI/CD Pipeline**: Already implemented with GitHub Actions
+- **🚀 Serverless Compute**: Modify job configuration to use serverless compute for faster startup and cost optimization
 - **Add more complex workflows** with multiple dependencies
 - **Integrate with ML workflows** using MLflow
 - **Explore advanced bundle features** like shared clusters and permissions
 - **Add integration tests** for end-to-end validation
 - **Implement blue-green deployments** for zero-downtime releases
 - **Add monitoring and alerting** for production pipelines
+
+### Serverless Compute Option
+
+To use serverless compute for faster startup and better cost optimization, modify your job tasks:
+
+```yaml
+tasks:
+  - task_key: notebook_task
+    compute:
+      compute_type: "serverless"  # Use Databricks serverless compute
+    notebook_task:
+      notebook_path: ../src/notebook.ipynb
+```
+
+**Benefits**: Faster startup, auto-scaling, no cluster management overhead.
 
 ## Additional Resources
 
