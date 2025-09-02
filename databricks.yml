@@ -27,15 +27,12 @@ targets:
       # Use /Workspace/Shared with proper permissions control
       root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
     
-    variables:
-      service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
-    
     # Apply run_as only to jobs (not pipelines)
     resources:
       jobs:
         test_databricks_asset_bundles_job:
           run_as:
-            service_principal_name: ${var.service_principal_name}
+            service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
     
     # Set proper permissions for the shared workspace
     permissions:
