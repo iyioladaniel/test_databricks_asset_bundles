@@ -16,15 +16,15 @@ targets:
     # See also https://docs.databricks.com/dev-tools/bundles/deployment-modes.html.
     mode: development
     default: true
-    workspace:
-      host: https://adb-8426789340308003.3.azuredatabricks.net
+    # No workspace configuration - authentication via environment variables
+    # DATABRICKS_HOST and DATABRICKS_TOKEN will be used automatically
 
   prod:
     mode: production
     workspace:
-      host: https://adb-8426789340308003.3.azuredatabricks.net
-      # We explicitly deploy to /Workspace/Users/daniel.iyiola@godevsuite072.onmicrosoft.com to make sure we only have a single copy.
-      root_path: /Workspace/Users/daniel.iyiola@godevsuite072.onmicrosoft.com/.bundle/${bundle.name}/${bundle.target}
-    permissions:
-      - user_name: daniel.iyiola@godevsuite072.onmicrosoft.com
-        level: CAN_MANAGE
+      # Authentication via environment variables DATABRICKS_HOST and DATABRICKS_TOKEN
+      # CD workflow sets these from secrets DATABRICKS_PROD_HOST and DATABRICKS_PROD_TOKEN
+      root_path: /Workspace/Shared/prod/.bundle/${bundle.name}/${bundle.target}
+    
+    run_as:
+      service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
