@@ -45,19 +45,11 @@ test_databricks_asset_bundles/
 
 ### 1. Prerequisites
 
-Install the Databricks CLI using one of these methods:
+Install the **new Databricks CLI** (required for Asset Bundles):
 
-**Using pip (Python):**
-```bash
-pip install databricks-cli
-```
+**⚠️ Important: Use the new CLI, not the old `databricks-cli` package**
 
-**Using PowerShell (Windows):**
-```powershell
-winget install Databricks.CLI
-```
-
-**Using apt (Ubuntu/Debian):**
+**Using the official installer (Recommended):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
 ```
@@ -68,12 +60,31 @@ brew tap databricks/tap
 brew install databricks
 ```
 
+**Using winget (Windows):**
+```powershell
+winget install Databricks.CLI
+```
+
+**❌ Don't use:** `pip install databricks-cli` (this is the old CLI that doesn't support bundles)
+
 ### 2. Authentication
 
-Authenticate to your Databricks workspace:
+**For Local Development:**
+You can authenticate using either the profile-based approach or environment variables:
+
+**Option A: Profile-based (Traditional):**
 ```bash
 databricks configure
 ```
+
+**Option B: Environment Variables (CI/CD Compatible):**
+```bash
+export DATABRICKS_HOST=https://your-workspace.azuredatabricks.net
+export DATABRICKS_TOKEN=your-token
+```
+
+**For CI/CD:**
+The pipeline uses environment variables automatically from GitHub Secrets (no manual configuration needed).
 
 ### 3. Initialize a New Bundle (Optional)
 
@@ -168,13 +179,12 @@ targets:
   dev:                # Development environment
     mode: development # Enables dev-specific features (prefixed names, paused schedules)
     default: true
-    workspace:
-      host: ${DATABRICKS_DEV_HOST}  
+    # Authentication via environment variables DATABRICKS_HOST and DATABRICKS_TOKEN
 
   prod:               # Production environment
     mode: production
     workspace:
-      host: ${DATABRICKS_HOST}
+      # Authentication via environment variables DATABRICKS_HOST and DATABRICKS_TOKEN
       root_path: /Workspace/Shared/prod/.bundle/${bundle.name}/${bundle.target}
     run_as:
       service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
@@ -264,39 +274,69 @@ graph LR
 **Triggers:** Pull requests and pushes to feature branches
 
 **What it does:**
-- ✅ Sets up Python environment
-- ✅ Installs dependencies  
-- ✅ Runs unit tests with pytest
-- ✅ Performs code linting (flake8, black)
-- ✅ Validates bundle configuration
-- ✅ Uses development environment secrets
+- ✅ Sets up Python 3.11 environment
+- ✅ Installs the new Databricks CLI (not pip package)
+- ✅ Installs dependencies from requirements-dev.txt
+- ✅ Runs unit tests with pytest (Databricks Connect tests skipped in CI)
+- ✅ Performs code linting (flake8, black) using configuration files
+- ✅ Validates bundle configuration with development secrets
 
 ### Continuous Deployment (CD)
 
 **Triggers:** Pushes to main branch (after PR merge)
 
 **What it does:**
-- 🚀 Validates production configuration
-- 🚀 Deploys to production environment
-- 🚀 Uses service principal authentication
-- 🚀 Requires environment approval (security gate)
+- 🚀 Installs the new Databricks CLI with bundle support
+- 🚀 Validates production configuration with production secrets
+- 🚀 Deploys to production environment using service principal
+- 🚀 Requires manual environment approval (security gate)
+- 🚀 Maps secrets to correct environment variable names
+
+### Key Implementation Details
+
+**Authentication Strategy:**
+- **Development**: Environment variables `DATABRICKS_HOST` and `DATABRICKS_TOKEN`
+- **Production**: Same environment variables + `DATABRICKS_SERVICE_PRINCIPAL_NAME`
+- **No profile configuration in bundle** - CLI reads environment variables automatically
+
+**Code Quality:**
+- **Configuration files**: `.flake8` and `pyproject.toml` for consistent linting
+- **Test strategy**: Skip Databricks Connect tests in CI (local development only)
+- **Security**: All secrets properly configured in GitHub Environments
+
+**CLI Requirements:**
+- **New Databricks CLI** (v0.240.0+) with bundle support
+- **Not the old** `databricks-cli` pip package
+- **Installation via official installer** in CI/CD workflows
 
 ### GitHub Environment Setup
 
 The pipeline uses GitHub Environments for secure secret management:
 
-#### Development Environment
+**Environment Authentication Mapping:**
+```
+GitHub Secret → Environment Variable → Databricks CLI
+DATABRICKS_DEV_HOST → DATABRICKS_HOST → Auto-detected
+DATABRICKS_DEV_TOKEN → DATABRICKS_TOKEN → Auto-detected
+DATABRICKS_PROD_HOST → DATABRICKS_HOST → Auto-detected  
+DATABRICKS_PROD_TOKEN → DATABRICKS_TOKEN → Auto-detected
+DATABRICKS_SERVICE_PRINCIPAL_NAME → Auto-used in bundle
+```
+
+#### Development Environment Secrets
 ```
 DATABRICKS_DEV_HOST = https://your-workspace.azuredatabricks.net
 DATABRICKS_DEV_TOKEN = <your-development-token>
 ```
 
-#### Production Environment  
+#### Production Environment Secrets
 ```
 DATABRICKS_PROD_HOST = https://your-workspace.azuredatabricks.net
 DATABRICKS_PROD_TOKEN = <your-production-token>
 DATABRICKS_SERVICE_PRINCIPAL_NAME = <your-service-principal>
 ```
+
+**⚠️ Important:** All these should be configured as **Secrets**, not Variables, for security.
 
 ### Workflow Commands
 
@@ -369,6 +409,22 @@ git push -u origin feature/new-pipeline
 databricks bundle validate
 ```
 
+**Check CLI Version:**
+```bash
+databricks --version
+# Should show v0.240.0 or later for bundle support
+```
+
+**CLI Installation Issues:**
+- ❌ `Error: No such command 'bundle'` → You have the old CLI installed
+- ✅ **Solution:** Install the new CLI using the official installer (not pip)
+- ✅ **Remove old CLI:** `pip uninstall databricks-cli`
+
+**Authentication Issues:**
+- ❌ `cannot parse config file: open ~/.databrickscfg: no such file or directory`
+- ✅ **Solution:** Use environment variables instead of profile in CI/CD
+- ✅ **For local development:** Run `databricks configure` or set environment variables
+
 **Check Deployed Resources:**
 ```bash
 databricks bundle summary --target dev
@@ -379,13 +435,15 @@ Check the Databricks workspace under **Workflows** for job execution details.
 
 **CI/CD Pipeline Issues:**
 - Check GitHub Actions logs in the repository's Actions tab
-- Verify environment secrets are correctly configured
+- Verify environment secrets are correctly configured as **Secrets** (not Variables)
 - Ensure service principal has proper permissions for production
+- Verify you're using the new Databricks CLI in workflows
 
 **Common Issues:**
 - **Catalog not found**: Create the required catalog in your workspace
 - **Permission denied**: Verify token/service principal permissions
 - **Bundle validation fails**: Check YAML syntax and resource references
+- **Variable interpolation warnings**: Don't use `${VAR}` syntax for authentication fields (`host`)
 
 ## Next Steps
 
