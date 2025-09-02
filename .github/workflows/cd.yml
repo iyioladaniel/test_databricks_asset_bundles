@@ -1,0 +1,37 @@
+name: CD - Deploy to Databricks
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+    deploy-production:
+        runs-on: ubuntu-latest
+        environment: production
+        if: github.ref == 'refs/heads/main'  # Ensure it only runs on main branch
+
+        steps:
+        - uses: actions/checkout@v4
+
+        - name: Set up Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: '3.11'
+        
+        - name: Install Databricks CLI
+          run: pip install databricks-cli
+
+        - name: Deploy to Databricks Production
+          env:
+            DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+            DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+            DATABRICKS_SERVICE_PRINCIPAL_NAME: ${{ secrets.DATABRICKS_SERVICE_PRINCIPAL_NAME }}
+          run: |
+            # Validate the bundle configuration before deployment
+            databricks bundle validate --target prod
+
+            # Deploy the bundle to the production environment
+            databricks bundle deploy --target prod
+
+            echo "Production deployment completed successfully"
