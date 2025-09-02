@@ -38,4 +38,8 @@ targets:
             service_principal_name: ${var.service_principal_name}
     
     # Set proper permissions for the shared workspace
+    permissions:
+      - level: CAN_MANAGE
         group_name: admins
+      - level: CAN_VIEW
+        group_name: users
