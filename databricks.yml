@@ -17,9 +17,11 @@ targets:
     mode: development
     default: true
     workspace:
-      # For local development, use profile. For CI/CD, use environment variable
-      profile: DEFAULT
+      # Authentication priority: environment variable > profile
+      # For CI/CD: set DATABRICKS_HOST env var
+      # For local development: uses DEFAULT profile when DATABRICKS_HOST is not set
       host: ${DATABRICKS_HOST}
+      profile: DEFAULT
 
   prod:
     mode: production

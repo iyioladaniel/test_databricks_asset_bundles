@@ -26,7 +26,7 @@ jobs:
           env:
             DATABRICKS_HOST: ${{ secrets.DATABRICKS_PROD_HOST }}
             DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PROD_TOKEN }}
-            DATABRICKS_SERVICE_PRINCIPAL_NAME: ${{ vars.DATABRICKS_SERVICE_PRINCIPAL_NAME }}
+            DATABRICKS_SERVICE_PRINCIPAL_NAME: ${{ secrets.DATABRICKS_SERVICE_PRINCIPAL_NAME }}
           run: |
             # Validate the bundle configuration before deployment
             databricks bundle validate --target prod
