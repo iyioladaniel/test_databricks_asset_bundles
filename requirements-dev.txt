@@ -32,3 +32,4 @@ isort
 ## for this project.
 #
 # databricks-connect>=15.4,<15.5
+# databricks-connect>=15.4,<15.5

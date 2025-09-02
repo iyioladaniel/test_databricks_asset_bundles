@@ -27,7 +27,8 @@ jobs:
 
         - name: Run tests
           run: |
-            pytest tests/ -v
+            echo "Running tests (Databricks Connect tests will be skipped in CI)"
+            pytest tests/ -v -rs
         
         - name: Lint code
           run: |
