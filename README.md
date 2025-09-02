@@ -5,7 +5,7 @@ This documentation demonstrates **Databricks Asset Bundles** - a modern Infrastr
 **✨ Features:**
 - Complete CI/CD pipeline with GitHub Actions
 - Multi-environment deployment (dev/prod)
-- **Serverless compute** for jobs and pipelines (cost-optimized, auto-scaling)
+- **Optimized compute** for jobs and serverless pipelines (cost-optimized, quick startup)
 - Automated testing and validation
 - Service principal authentication for production
 - Secure workspace deployment paths
@@ -171,9 +171,9 @@ This is the central configuration file that defines your bundle. See the actual 
 
 **Key features:**
 - **Development target**: Uses environment variables for authentication, development mode with prefixed resources
-- **Production target**: Uses service principal authentication for jobs, secure user-specific workspace path
+- **Production target**: Uses service principal authentication for jobs, secure user-specific workspace path with proper variable syntax
 - **Resource inclusion**: Automatically includes all YAML files from `resources/` directory
-- **Serverless compute**: Both development and production use serverless compute by default
+- **Optimized compute**: Jobs use single-node clusters for cost optimization, pipelines use serverless
 
 ### `resources/test_databricks_asset_bundles.job.yml` - Job Definition
 
@@ -183,7 +183,7 @@ Defines a multi-task job with dependencies. See the actual file: [`resources/tes
 - **Multi-task workflow**: Notebook → Pipeline → Python wheel execution
 - **Task dependencies**: Sequential execution with proper dependency management
 - **Scheduled execution**: Daily trigger configuration
-- **Serverless compute**: No cluster management required - automatic scaling and cost optimization
+- **Optimized compute**: Single-node clusters for cost optimization and quick startup
 - **Service principal**: Production runs with service principal authentication
 
 ### `resources/test_databricks_asset_bundles.pipeline.yml` - Pipeline Definition
@@ -398,7 +398,7 @@ Check the Databricks workspace under **Workflows** for job execution details.
 ## Next Steps
 
 - **✅ CI/CD Pipeline**: Already implemented with GitHub Actions
-- **✅ Serverless Compute**: Already configured for jobs and pipelines with automatic scaling and cost optimization
+- **✅ Optimized Compute**: Jobs configured with single-node clusters for cost optimization, pipelines use serverless
 - **Add more complex workflows** with multiple dependencies
 - **Integrate with ML workflows** using MLflow
 - **Explore advanced bundle features** like shared clusters and permissions
@@ -406,18 +406,18 @@ Check the Databricks workspace under **Workflows** for job execution details.
 - **Implement blue-green deployments** for zero-downtime releases
 - **Add monitoring and alerting** for production pipelines
 
-### Current Serverless Configuration
+### Current Compute Configuration
 
-The project is already configured to use **serverless compute** for optimal performance and cost:
+The project is configured for optimal performance and cost:
 
-**Jobs**: Automatically use serverless compute when no cluster configuration is specified
+**Jobs**: Use single-node clusters (`num_workers: 0`) for quick startup and cost optimization
 **Pipelines**: Configured with `serverless: true` for Delta Live Tables
 
-**Benefits Already Realized**:
-- ⚡ **Faster startup times**: No cluster spin-up delays
-- 💰 **Cost optimization**: Pay only for actual compute usage
-- 🔄 **Auto-scaling**: Automatic resource allocation based on workload
-- 🛠️ **Zero maintenance**: No cluster configuration or management required
+**Benefits Realized**:
+- ⚡ **Quick startup**: Single-node clusters start faster than multi-node
+- 💰 **Cost optimization**: Minimal compute resources, pay only for what you use
+- 🔄 **DLT Serverless**: Pipelines use true serverless compute with auto-scaling
+- 🛠️ **Simplified management**: Minimal cluster configuration required
 
 ## Additional Resources
 

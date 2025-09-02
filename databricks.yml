@@ -25,11 +25,14 @@ targets:
       # Authentication via environment variables DATABRICKS_HOST and DATABRICKS_TOKEN
       # CD workflow sets these from secrets DATABRICKS_PROD_HOST and DATABRICKS_PROD_TOKEN
       # Use service principal path for better security instead of /Workspace/Shared
-      root_path: /Workspace/Users/${DATABRICKS_SERVICE_PRINCIPAL_NAME}/.bundle/${bundle.name}/${bundle.target}
+      root_path: /Workspace/Users/${var.service_principal_name}/.bundle/${bundle.name}/${bundle.target}
+    
+    variables:
+      service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
     
     # Apply run_as only to jobs (not pipelines)
     resources:
       jobs:
         test_databricks_asset_bundles_job:
           run_as:
-            service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
+            service_principal_name: ${var.service_principal_name}

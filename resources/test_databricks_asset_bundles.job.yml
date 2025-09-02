@@ -18,6 +18,11 @@ resources:
         - task_key: notebook_task
           notebook_task:
             notebook_path: ../src/notebook.ipynb
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: Standard_D3_v2
+            num_workers: 0  # Single node for serverless-like behavior
+            data_security_mode: SINGLE_USER
 
         - task_key: refresh_pipeline
           depends_on:
@@ -36,6 +41,11 @@ resources:
             # See https://docs.databricks.com/dev-tools/bundles/library-dependencies.html
             # for more information on how to add other libraries.
             - whl: ../dist/*.whl
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: Standard_D3_v2
+            num_workers: 0  # Single node for serverless-like behavior
+            data_security_mode: SINGLE_USER
 
-      # Remove job_clusters section to use serverless compute
-      # Serverless compute will be used automatically when no cluster is specified
+      # Use single-node clusters for cost optimization and quick startup
+      # Similar to serverless but with explicit cluster configuration required by Databricks
