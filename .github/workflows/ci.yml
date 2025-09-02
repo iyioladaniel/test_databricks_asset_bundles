@@ -23,7 +23,18 @@ jobs:
           run: |
             python -m pip install --upgrade pip
             pip install -r requirements-dev.txt
-            pip install databricks-cli
+
+        - name: Install Databricks CLI
+          run: |
+            # Install the new Databricks CLI (not the old databricks-cli package)
+            curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+            echo "$HOME/.databricks/bin" >> $GITHUB_PATH
+            
+        - name: Verify Databricks CLI
+          run: |
+            # Verify we have the correct CLI with bundle support
+            databricks --version
+            databricks bundle --help
 
         - name: Run tests
           run: |
