@@ -4,6 +4,10 @@ bundle:
   name: test_databricks_asset_bundles
   uuid: da3439c8-68ba-48bd-bcaa-af8f4ee4ad34
 
+variables:
+  service_principal_name:
+    description: "Service principal name for production deployment"
+
 include:
   - resources/*.yml
   - resources/*/*.yml
@@ -27,16 +31,17 @@ targets:
       # Use /Workspace/Shared with proper permissions control
       root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
     
+    variables:
+      service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
+    
     # Apply run_as only to jobs (not pipelines)
     resources:
       jobs:
         test_databricks_asset_bundles_job:
           run_as:
-            service_principal_name: ${DATABRICKS_SERVICE_PRINCIPAL_NAME}
+            service_principal_name: ${var.service_principal_name}
     
     # Set proper permissions for the shared workspace
     permissions:
       - level: CAN_MANAGE
-        group_name: admins
-      - level: CAN_VIEW
         group_name: users
