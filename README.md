@@ -171,9 +171,10 @@ This is the central configuration file that defines your bundle. See the actual 
 
 **Key features:**
 - **Development target**: Uses environment variables for authentication, development mode with prefixed resources
-- **Production target**: Uses service principal authentication with client credentials, shared workspace with controlled permissions
+- **Production target**: Uses service principal authentication with client credentials, shared workspace with explicit permissions
 - **Resource inclusion**: Automatically includes all YAML files from `resources/` directory
 - **Optimized compute**: Jobs use shared autoscaling clusters for cost optimization, pipelines use serverless
+- **Permission management**: Explicit service principal permissions for secure deployment
 
 ### `resources/test_databricks_asset_bundles.job.yml` - Job Definition
 
@@ -270,8 +271,7 @@ Production Environment:
 DATABRICKS_PROD_HOST → DATABRICKS_HOST → Auto-detected  
 DATABRICKS_CLIENT_ID → Service Principal App ID → Auto-detected
 DATABRICKS_CLIENT_SECRET → Service Principal Secret → Auto-detected
-```
-DATABRICKS_SERVICE_PRINCIPAL_NAME → Auto-used in bundle
+DATABRICKS_SERVICE_PRINCIPAL_NAME → Service Principal Name → Used in bundle permissions
 ```
 
 #### Development Environment Secrets
@@ -285,9 +285,30 @@ DATABRICKS_DEV_TOKEN = <your-development-token>
 DATABRICKS_PROD_HOST = https://your-workspace.azuredatabricks.net
 DATABRICKS_CLIENT_ID = <your-service-principal-application-id>
 DATABRICKS_CLIENT_SECRET = <your-service-principal-client-secret>
+DATABRICKS_SERVICE_PRINCIPAL_NAME = <your-service-principal-display-name>
 ```
 
 **⚠️ Important:** All these should be configured as **Secrets**, not Variables, for security.
+
+### Service Principal Configuration
+
+For production deployments, this project uses service principal authentication with explicit permission management:
+
+**Key Configuration:**
+- **Bundle variable**: `service_principal_name` with default value `databricks-cicd-sp`
+- **Explicit permissions**: Service principal gets `CAN_MANAGE` permissions on deployed resources
+- **Shared workspace**: Uses `/Workspace/Shared/.bundle/` path with controlled access
+- **Authentication**: CLIENT_ID/CLIENT_SECRET environment variables
+
+**Setting up Service Principal:**
+1. **Create Service Principal** in Databricks workspace admin console
+2. **Get Application ID** - this becomes your `DATABRICKS_CLIENT_ID`
+3. **Generate Client Secret** - this becomes your `DATABRICKS_CLIENT_SECRET`
+4. **Note the Display Name** - this becomes your `DATABRICKS_SERVICE_PRINCIPAL_NAME`
+5. **Grant Workspace Access** - ensure the service principal has access to create resources in your workspace
+6. **Update GitHub Secrets** - add all four secrets to your production environment
+
+This configuration ensures that the deployment identity has proper permissions to manage the deployed resources, following Databricks security best practices.
 
 ### Workflow Commands
 
@@ -350,9 +371,10 @@ git push -u origin feature/new-pipeline
 - **Automated Building**: Python packages built and deployed automatically
 - **Resource References**: Pipeline IDs dynamically referenced in jobs
 - **CI/CD Integration**: Automated testing, validation, and deployment
-- **Security**: Service principal authentication and secure workspace paths for production
+- **Security**: Service principal authentication with explicit permission management for production
 - **Code Quality**: Automated linting and testing
 - **Approval Gates**: Production deployments require manual approval
+- **Permission Control**: Explicit deployment identity permissions following security best practices
 
 ## Troubleshooting
 
@@ -394,10 +416,11 @@ Check the Databricks workspace under **Workflows** for job execution details.
 **Common Issues:**
 - **Build errors**: Missing wheel package → Fixed automatically by installing build dependencies
 - **Catalog not found**: Create the required catalog in your workspace
-- **Permission denied**: Verify token/service principal permissions
+- **Permission denied**: Verify token/service principal permissions and explicit permission configuration
 - **Bundle validation fails**: Check YAML syntax and resource references
 - **Variable interpolation warnings**: Don't use `${VAR}` syntax for authentication fields (`host`)
 - **Workspace path access**: Using secure service principal paths instead of shared workspace
+- **Service principal permissions**: Ensure the deployment service principal is explicitly granted CAN_MANAGE permissions in bundle configuration
 
 ## Next Steps
 
