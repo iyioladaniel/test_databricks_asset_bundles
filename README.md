@@ -171,9 +171,9 @@ This is the central configuration file that defines your bundle. See the actual 
 
 **Key features:**
 - **Development target**: Uses environment variables for authentication, development mode with prefixed resources
-- **Production target**: Uses service principal authentication for jobs, shared workspace with controlled permissions
+- **Production target**: Uses service principal authentication with client credentials, shared workspace with controlled permissions
 - **Resource inclusion**: Automatically includes all YAML files from `resources/` directory
-- **Optimized compute**: Jobs use shared single-node clusters for cost optimization, pipelines use serverless
+- **Optimized compute**: Jobs use shared autoscaling clusters for cost optimization, pipelines use serverless
 
 ### `resources/test_databricks_asset_bundles.job.yml` - Job Definition
 
@@ -183,8 +183,8 @@ Defines a multi-task job with dependencies. See the actual file: [`resources/tes
 - **Multi-task workflow**: Notebook → Pipeline → Python wheel execution
 - **Task dependencies**: Sequential execution with proper dependency management
 - **Scheduled execution**: Daily trigger configuration
-- **Shared cluster**: Single cluster definition used across tasks to avoid configuration drift
-- **Service principal**: Production runs with service principal authentication
+- **Shared cluster**: Autoscaling cluster definition used across tasks to avoid configuration drift
+- **Production deployment**: Deployed using service principal authentication
 
 ### `resources/test_databricks_asset_bundles.pipeline.yml` - Pipeline Definition
 
@@ -233,17 +233,17 @@ graph LR
 **What it does:**
 - 🚀 Installs Python build dependencies (wheel, setuptools)
 - 🚀 Installs the new Databricks CLI with bundle support
-- 🚀 Validates production configuration with production secrets
+- 🚀 Validates production configuration with service principal authentication
 - 🚀 Deploys to production environment using service principal
-- 🚀 Uses serverless compute for cost optimization and automatic scaling
+- 🚀 Uses optimized compute for cost efficiency
 - 🚀 Requires manual environment approval (security gate)
-- 🚀 Maps secrets to correct environment variable names
+- 🚀 Uses proper service principal credentials for secure deployment
 
 ### Key Implementation Details
 
 **Authentication Strategy:**
-- **Development**: Environment variables `DATABRICKS_HOST` and `DATABRICKS_TOKEN`
-- **Production**: Same environment variables + `DATABRICKS_SERVICE_PRINCIPAL_NAME`
+- **Development**: Environment variables `DATABRICKS_HOST` and `DATABRICKS_TOKEN` (user token)
+- **Production**: Service principal authentication using `DATABRICKS_CLIENT_ID` and `DATABRICKS_CLIENT_SECRET`
 - **No profile configuration in bundle** - CLI reads environment variables automatically
 
 **Code Quality:**
@@ -262,11 +262,15 @@ The pipeline uses GitHub Environments for secure secret management:
 
 **Environment Authentication Mapping:**
 ```
-GitHub Secret → Environment Variable → Databricks CLI
+Development Environment:
 DATABRICKS_DEV_HOST → DATABRICKS_HOST → Auto-detected
 DATABRICKS_DEV_TOKEN → DATABRICKS_TOKEN → Auto-detected
+
+Production Environment:
 DATABRICKS_PROD_HOST → DATABRICKS_HOST → Auto-detected  
-DATABRICKS_PROD_TOKEN → DATABRICKS_TOKEN → Auto-detected
+DATABRICKS_CLIENT_ID → Service Principal App ID → Auto-detected
+DATABRICKS_CLIENT_SECRET → Service Principal Secret → Auto-detected
+```
 DATABRICKS_SERVICE_PRINCIPAL_NAME → Auto-used in bundle
 ```
 
@@ -279,8 +283,8 @@ DATABRICKS_DEV_TOKEN = <your-development-token>
 #### Production Environment Secrets
 ```
 DATABRICKS_PROD_HOST = https://your-workspace.azuredatabricks.net
-DATABRICKS_PROD_TOKEN = <your-production-token>
-DATABRICKS_SERVICE_PRINCIPAL_NAME = <your-service-principal>
+DATABRICKS_CLIENT_ID = <your-service-principal-application-id>
+DATABRICKS_CLIENT_SECRET = <your-service-principal-client-secret>
 ```
 
 **⚠️ Important:** All these should be configured as **Secrets**, not Variables, for security.
@@ -410,15 +414,15 @@ Check the Databricks workspace under **Workflows** for job execution details.
 
 The project is configured for optimal performance and cost:
 
-**Jobs**: Use shared single-node cluster (`num_workers: 0`) to avoid configuration drift and optimize costs
+**Jobs**: Use shared autoscaling cluster (1-2 workers) to avoid configuration drift and optimize costs
 **Pipelines**: Configured with `serverless: true` for Delta Live Tables
 
 **Benefits Realized**:
-- ⚡ **Quick startup**: Single-node clusters start faster than multi-node
-- 💰 **Cost optimization**: Minimal compute resources, shared across tasks
+- ⚡ **Quick startup**: Small autoscaling clusters start faster than large clusters
+- 💰 **Cost optimization**: Minimal compute resources, shared across tasks, autoscales based on workload
 - 🔄 **DLT Serverless**: Pipelines use true serverless compute with auto-scaling
 - 🛠️ **Configuration consistency**: Single cluster definition prevents drift between tasks
-- 🔒 **Controlled access**: Shared workspace with explicit permissions management
+- 🔒 **Secure deployment**: Service principal authentication for production deployments
 
 ## Additional Resources
 
