@@ -45,5 +45,7 @@ resources:
           new_cluster:
             spark_version: 15.4.x-scala2.12
             node_type_id: Standard_D3_v2
-            num_workers: 0  # Single node for cost optimization
+            autoscale:
+              min_workers: 1
+              max_workers: 2
             data_security_mode: SINGLE_USER
