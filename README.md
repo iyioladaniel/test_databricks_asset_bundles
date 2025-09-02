@@ -5,8 +5,10 @@ This documentation demonstrates **Databricks Asset Bundles** - a modern Infrastr
 **✨ Features:**
 - Complete CI/CD pipeline with GitHub Actions
 - Multi-environment deployment (dev/prod)
+- **Serverless compute** for jobs and pipelines (cost-optimized, auto-scaling)
 - Automated testing and validation
 - Service principal authentication for production
+- Secure workspace deployment paths
 
 ## What are Databricks Asset Bundles?
 
@@ -169,8 +171,9 @@ This is the central configuration file that defines your bundle. See the actual 
 
 **Key features:**
 - **Development target**: Uses environment variables for authentication, development mode with prefixed resources
-- **Production target**: Uses service principal authentication for jobs, custom root path
+- **Production target**: Uses service principal authentication for jobs, secure user-specific workspace path
 - **Resource inclusion**: Automatically includes all YAML files from `resources/` directory
+- **Serverless compute**: Both development and production use serverless compute by default
 
 ### `resources/test_databricks_asset_bundles.job.yml` - Job Definition
 
@@ -180,7 +183,7 @@ Defines a multi-task job with dependencies. See the actual file: [`resources/tes
 - **Multi-task workflow**: Notebook → Pipeline → Python wheel execution
 - **Task dependencies**: Sequential execution with proper dependency management
 - **Scheduled execution**: Daily trigger configuration
-- **Cluster configuration**: Autoscaling job cluster setup
+- **Serverless compute**: No cluster management required - automatic scaling and cost optimization
 - **Service principal**: Production runs with service principal authentication
 
 ### `resources/test_databricks_asset_bundles.pipeline.yml` - Pipeline Definition
@@ -191,6 +194,7 @@ Defines a Delta Live Tables (DLT) pipeline. See the actual file: [`resources/tes
 - **DLT pipeline**: Delta Live Tables for data transformation
 - **Dynamic schema**: Environment-specific schema naming
 - **Notebook integration**: DLT notebook as pipeline source
+- **Serverless compute**: Automatic scaling and cost optimization
 - **User ownership**: Pipelines owned by authenticated user (not service principal)
 
 ## CI/CD Pipeline
@@ -215,6 +219,7 @@ graph LR
 
 **What it does:**
 - ✅ Sets up Python 3.11 environment
+- ✅ Installs Python build dependencies (wheel, setuptools)
 - ✅ Installs the new Databricks CLI (not pip package)
 - ✅ Installs dependencies from requirements-dev.txt
 - ✅ Runs unit tests with pytest (Databricks Connect tests skipped in CI)
@@ -226,9 +231,11 @@ graph LR
 **Triggers:** Pushes to main branch (after PR merge)
 
 **What it does:**
+- 🚀 Installs Python build dependencies (wheel, setuptools)
 - 🚀 Installs the new Databricks CLI with bundle support
 - 🚀 Validates production configuration with production secrets
 - 🚀 Deploys to production environment using service principal
+- 🚀 Uses serverless compute for cost optimization and automatic scaling
 - 🚀 Requires manual environment approval (security gate)
 - 🚀 Maps secrets to correct environment variable names
 
@@ -332,13 +339,14 @@ git push -u origin feature/new-pipeline
 
 ## Key Benefits Demonstrated
 
+- **Serverless Computing**: Automatic scaling, cost optimization, no cluster management overhead
 - **Environment Isolation**: Separate dev/prod configurations with different authentication methods
 - **Dependency Management**: Jobs can depend on pipeline completion
 - **Infrastructure as Code**: All resources defined in version-controlled YAML
 - **Automated Building**: Python packages built and deployed automatically
 - **Resource References**: Pipeline IDs dynamically referenced in jobs
 - **CI/CD Integration**: Automated testing, validation, and deployment
-- **Security**: Service principal authentication for production
+- **Security**: Service principal authentication and secure workspace paths for production
 - **Code Quality**: Automated linting and testing
 - **Approval Gates**: Production deployments require manual approval
 
@@ -380,15 +388,17 @@ Check the Databricks workspace under **Workflows** for job execution details.
 - Verify you're using the new Databricks CLI in workflows
 
 **Common Issues:**
+- **Build errors**: Missing wheel package → Fixed automatically by installing build dependencies
 - **Catalog not found**: Create the required catalog in your workspace
 - **Permission denied**: Verify token/service principal permissions
 - **Bundle validation fails**: Check YAML syntax and resource references
 - **Variable interpolation warnings**: Don't use `${VAR}` syntax for authentication fields (`host`)
+- **Workspace path access**: Using secure service principal paths instead of shared workspace
 
 ## Next Steps
 
 - **✅ CI/CD Pipeline**: Already implemented with GitHub Actions
-- **🚀 Serverless Compute**: Modify job configuration to use serverless compute for faster startup and cost optimization
+- **✅ Serverless Compute**: Already configured for jobs and pipelines with automatic scaling and cost optimization
 - **Add more complex workflows** with multiple dependencies
 - **Integrate with ML workflows** using MLflow
 - **Explore advanced bundle features** like shared clusters and permissions
@@ -396,20 +406,18 @@ Check the Databricks workspace under **Workflows** for job execution details.
 - **Implement blue-green deployments** for zero-downtime releases
 - **Add monitoring and alerting** for production pipelines
 
-### Serverless Compute Option
+### Current Serverless Configuration
 
-To use serverless compute for faster startup and better cost optimization, modify your job tasks:
+The project is already configured to use **serverless compute** for optimal performance and cost:
 
-```yaml
-tasks:
-  - task_key: notebook_task
-    compute:
-      compute_type: "serverless"  # Use Databricks serverless compute
-    notebook_task:
-      notebook_path: ../src/notebook.ipynb
-```
+**Jobs**: Automatically use serverless compute when no cluster configuration is specified
+**Pipelines**: Configured with `serverless: true` for Delta Live Tables
 
-**Benefits**: Faster startup, auto-scaling, no cluster management overhead.
+**Benefits Already Realized**:
+- ⚡ **Faster startup times**: No cluster spin-up delays
+- 💰 **Cost optimization**: Pay only for actual compute usage
+- 🔄 **Auto-scaling**: Automatic resource allocation based on workload
+- 🛠️ **Zero maintenance**: No cluster configuration or management required
 
 ## Additional Resources
 
@@ -422,4 +430,4 @@ tasks:
 
 ---
 
-*This project demonstrates enterprise-grade Infrastructure as Code with Databricks, featuring automated CI/CD pipelines, multi-environment deployments, and security best practices for production data and ML workloads.*
+*This project demonstrates enterprise-grade Infrastructure as Code with Databricks, featuring automated CI/CD pipelines, serverless compute for optimal cost and performance, multi-environment deployments, and security best practices for production data and ML workloads.*
