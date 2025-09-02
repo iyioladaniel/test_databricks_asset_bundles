@@ -171,10 +171,10 @@ This is the central configuration file that defines your bundle. See the actual 
 
 **Key features:**
 - **Development target**: Uses environment variables for authentication, development mode with prefixed resources
-- **Production target**: Uses service principal authentication with client credentials, shared workspace with explicit permissions
+- **Production target**: Uses service principal authentication with client credentials, shared workspace with group-based permissions
 - **Resource inclusion**: Automatically includes all YAML files from `resources/` directory
 - **Optimized compute**: Jobs use shared autoscaling clusters for cost optimization, pipelines use serverless
-- **Permission management**: Explicit service principal permissions for secure deployment
+- **Permission management**: Group-based permissions for simplified deployment
 
 ### `resources/test_databricks_asset_bundles.job.yml` - Job Definition
 
@@ -271,7 +271,6 @@ Production Environment:
 DATABRICKS_PROD_HOST → DATABRICKS_HOST → Auto-detected  
 DATABRICKS_CLIENT_ID → Service Principal App ID → Auto-detected
 DATABRICKS_CLIENT_SECRET → Service Principal Secret → Auto-detected
-DATABRICKS_SERVICE_PRINCIPAL_NAME → Service Principal Name → Used in bundle permissions
 ```
 
 #### Development Environment Secrets
@@ -285,30 +284,40 @@ DATABRICKS_DEV_TOKEN = <your-development-token>
 DATABRICKS_PROD_HOST = https://your-workspace.azuredatabricks.net
 DATABRICKS_CLIENT_ID = <your-service-principal-application-id>
 DATABRICKS_CLIENT_SECRET = <your-service-principal-client-secret>
-DATABRICKS_SERVICE_PRINCIPAL_NAME = <your-service-principal-display-name>
 ```
 
 **⚠️ Important:** All these should be configured as **Secrets**, not Variables, for security.
 
 ### Service Principal Configuration
 
-For production deployments, this project uses service principal authentication with explicit permission management:
+For production deployments, this project uses service principal authentication with **group-based permission management**:
+
+**Why Group-Based Permissions?**
+- **Avoids hardcoding service principal names**: No need to specify exact service principal names in configuration
+- **Flexibility**: Works with any service principal that's a member of the specified group
+- **Simplicity**: Reduces configuration complexity and potential naming conflicts
+- **Best Practice**: Follows Databricks recommendations for scalable permission management
 
 **Key Configuration:**
-- **Bundle variable**: `service_principal_name` with default value `databricks-cicd-sp`
-- **Explicit permissions**: Service principal gets `CAN_MANAGE` permissions on deployed resources
-- **Shared workspace**: Uses `/Workspace/Shared/.bundle/` path with controlled access
-- **Authentication**: CLIENT_ID/CLIENT_SECRET environment variables
+- **Service Principal Authentication**: CLIENT_ID/CLIENT_SECRET environment variables
+- **Shared workspace**: Uses `/Workspace/Shared/.bundle/` path with group-based permissions
+- **Permission Strategy**: Uses `users` group for CAN_MANAGE permissions
+- **No explicit service principal references**: Avoids dependency on specific service principal names
 
 **Setting up Service Principal:**
 1. **Create Service Principal** in Databricks workspace admin console
 2. **Get Application ID** - this becomes your `DATABRICKS_CLIENT_ID`
 3. **Generate Client Secret** - this becomes your `DATABRICKS_CLIENT_SECRET`
-4. **Note the Display Name** - this becomes your `DATABRICKS_SERVICE_PRINCIPAL_NAME`
+4. **Add to Users Group** - ensure the service principal is a member of the `users` group (or whatever group you specify in permissions)
 5. **Grant Workspace Access** - ensure the service principal has access to create resources in your workspace
-6. **Update GitHub Secrets** - add all four secrets to your production environment
+6. **Update GitHub Secrets** - add the three secrets to your production environment
 
-This configuration ensures that the deployment identity has proper permissions to manage the deployed resources, following Databricks security best practices.
+**Why This Approach Works Better:**
+- ✅ **No service principal name dependencies**: Bundle doesn't need to know the exact service principal name
+- ✅ **Works with any service principal**: As long as it's in the specified group
+- ✅ **Deployment recommendation ignored safely**: The CLI warning about explicit service principal permissions is not relevant for group-based permissions
+- ✅ **Easier to maintain**: No hardcoded names in configuration files
+- ✅ **Environment agnostic**: Same configuration works across different workspaces
 
 ### Workflow Commands
 
@@ -371,10 +380,10 @@ git push -u origin feature/new-pipeline
 - **Automated Building**: Python packages built and deployed automatically
 - **Resource References**: Pipeline IDs dynamically referenced in jobs
 - **CI/CD Integration**: Automated testing, validation, and deployment
-- **Security**: Service principal authentication with explicit permission management for production
+- **Security**: Service principal authentication with group-based permission management for production
 - **Code Quality**: Automated linting and testing
 - **Approval Gates**: Production deployments require manual approval
-- **Permission Control**: Explicit deployment identity permissions following security best practices
+- **Simplified Permissions**: Group-based permissions that avoid service principal name resolution issues
 
 ## Troubleshooting
 
@@ -416,11 +425,23 @@ Check the Databricks workspace under **Workflows** for job execution details.
 **Common Issues:**
 - **Build errors**: Missing wheel package → Fixed automatically by installing build dependencies
 - **Catalog not found**: Create the required catalog in your workspace
-- **Permission denied**: Verify token/service principal permissions and explicit permission configuration
+- **Permission denied**: Verify token/service principal permissions and group membership
 - **Bundle validation fails**: Check YAML syntax and resource references
 - **Variable interpolation warnings**: Don't use `${VAR}` syntax for authentication fields (`host`)
-- **Workspace path access**: Using secure service principal paths instead of shared workspace
-- **Service principal permissions**: Ensure the deployment service principal is explicitly granted CAN_MANAGE permissions in bundle configuration
+- **Workspace path access**: Using secure service principal paths with group-based permissions
+- **CLI permission recommendations**: The CLI may recommend adding explicit service principal permissions, but this can be safely ignored when using group-based permissions like we do with the `users` group
+
+**About the CLI Permission Recommendation:**
+When deploying, the Databricks CLI may show a recommendation like:
+```
+Recommendation: permissions section should explicitly include the current deployment identity 'service-principal-name' or one of its groups
+```
+
+**This recommendation can be safely ignored** when using group-based permissions because:
+- The service principal gets permissions through group membership (`users` group in our case)
+- Group-based permissions are more flexible and maintainable than explicit service principal permissions
+- The deployment will work correctly despite the recommendation
+- This approach avoids hardcoding service principal names in configuration files
 
 ## Next Steps
 

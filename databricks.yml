@@ -4,13 +4,6 @@ bundle:
   name: test_databricks_asset_bundles
   uuid: da3439c8-68ba-48bd-bcaa-af8f4ee4ad34
 
-variables:
-  service_principal_name:
-    description: "Service principal name for production deployment permissions"
-    # This will be set via environment variable DATABRICKS_SERVICE_PRINCIPAL_NAME in CI/CD
-    # For local testing, defaults to a placeholder that can be overridden
-    default: "databricks-cicd-sp"
-
 include:
   - resources/*.yml
   - resources/*/*.yml
@@ -36,9 +29,5 @@ targets:
     
     # Set proper permissions for the shared workspace
     permissions:
-      # Explicitly include the deployment service principal for CAN_MANAGE permissions
-      - service_principal_name: ${var.service_principal_name}
-        level: CAN_MANAGE
-      # Also include users group for broader access
       - level: CAN_MANAGE
         group_name: users
