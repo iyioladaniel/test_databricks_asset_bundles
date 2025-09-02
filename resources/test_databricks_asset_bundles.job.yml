@@ -16,13 +16,9 @@ resources:
 
       tasks:
         - task_key: notebook_task
+          job_cluster_key: shared_cluster
           notebook_task:
             notebook_path: ../src/notebook.ipynb
-          new_cluster:
-            spark_version: 15.4.x-scala2.12
-            node_type_id: Standard_D3_v2
-            num_workers: 0  # Single node for serverless-like behavior
-            data_security_mode: SINGLE_USER
 
         - task_key: refresh_pipeline
           depends_on:
@@ -33,6 +29,7 @@ resources:
         - task_key: main_task
           depends_on:
             - task_key: refresh_pipeline
+          job_cluster_key: shared_cluster
           python_wheel_task:
             package_name: test_databricks_asset_bundles
             entry_point: main
@@ -41,11 +38,12 @@ resources:
             # See https://docs.databricks.com/dev-tools/bundles/library-dependencies.html
             # for more information on how to add other libraries.
             - whl: ../dist/*.whl
+
+      # Shared cluster configuration to avoid duplication
+      job_clusters:
+        - job_cluster_key: shared_cluster
           new_cluster:
             spark_version: 15.4.x-scala2.12
             node_type_id: Standard_D3_v2
-            num_workers: 0  # Single node for serverless-like behavior
+            num_workers: 0  # Single node for cost optimization
             data_security_mode: SINGLE_USER
-
-      # Use single-node clusters for cost optimization and quick startup
-      # Similar to serverless but with explicit cluster configuration required by Databricks

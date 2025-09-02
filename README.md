@@ -5,10 +5,10 @@ This documentation demonstrates **Databricks Asset Bundles** - a modern Infrastr
 **✨ Features:**
 - Complete CI/CD pipeline with GitHub Actions
 - Multi-environment deployment (dev/prod)
-- **Optimized compute** for jobs and serverless pipelines (cost-optimized, quick startup)
+- **Optimized compute** with shared clusters and serverless pipelines (cost-optimized, quick startup)
 - Automated testing and validation
 - Service principal authentication for production
-- Secure workspace deployment paths
+- Controlled workspace permissions
 
 ## What are Databricks Asset Bundles?
 
@@ -171,9 +171,9 @@ This is the central configuration file that defines your bundle. See the actual 
 
 **Key features:**
 - **Development target**: Uses environment variables for authentication, development mode with prefixed resources
-- **Production target**: Uses service principal authentication for jobs, secure user-specific workspace path with proper variable syntax
+- **Production target**: Uses service principal authentication for jobs, shared workspace with controlled permissions
 - **Resource inclusion**: Automatically includes all YAML files from `resources/` directory
-- **Optimized compute**: Jobs use single-node clusters for cost optimization, pipelines use serverless
+- **Optimized compute**: Jobs use shared single-node clusters for cost optimization, pipelines use serverless
 
 ### `resources/test_databricks_asset_bundles.job.yml` - Job Definition
 
@@ -183,7 +183,7 @@ Defines a multi-task job with dependencies. See the actual file: [`resources/tes
 - **Multi-task workflow**: Notebook → Pipeline → Python wheel execution
 - **Task dependencies**: Sequential execution with proper dependency management
 - **Scheduled execution**: Daily trigger configuration
-- **Optimized compute**: Single-node clusters for cost optimization and quick startup
+- **Shared cluster**: Single cluster definition used across tasks to avoid configuration drift
 - **Service principal**: Production runs with service principal authentication
 
 ### `resources/test_databricks_asset_bundles.pipeline.yml` - Pipeline Definition
@@ -410,14 +410,15 @@ Check the Databricks workspace under **Workflows** for job execution details.
 
 The project is configured for optimal performance and cost:
 
-**Jobs**: Use single-node clusters (`num_workers: 0`) for quick startup and cost optimization
+**Jobs**: Use shared single-node cluster (`num_workers: 0`) to avoid configuration drift and optimize costs
 **Pipelines**: Configured with `serverless: true` for Delta Live Tables
 
 **Benefits Realized**:
 - ⚡ **Quick startup**: Single-node clusters start faster than multi-node
-- 💰 **Cost optimization**: Minimal compute resources, pay only for what you use
+- 💰 **Cost optimization**: Minimal compute resources, shared across tasks
 - 🔄 **DLT Serverless**: Pipelines use true serverless compute with auto-scaling
-- 🛠️ **Simplified management**: Minimal cluster configuration required
+- 🛠️ **Configuration consistency**: Single cluster definition prevents drift between tasks
+- 🔒 **Controlled access**: Shared workspace with explicit permissions management
 
 ## Additional Resources
 
