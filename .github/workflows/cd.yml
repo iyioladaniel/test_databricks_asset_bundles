@@ -38,9 +38,10 @@ jobs:
 
         - name: Deploy to Databricks Production
           env:
-            # Map production secrets to the standard environment variable names
+            # Use service principal authentication instead of user token
             DATABRICKS_HOST: ${{ secrets.DATABRICKS_PROD_HOST }}
-            DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_PROD_TOKEN }}
+            DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+            DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
             DATABRICKS_SERVICE_PRINCIPAL_NAME: ${{ secrets.DATABRICKS_SERVICE_PRINCIPAL_NAME }}
           run: |
             # Validate the bundle configuration before deployment
